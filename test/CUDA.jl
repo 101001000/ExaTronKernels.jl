@@ -47,11 +47,11 @@ end
 
 Random.seed!(0)
 itermax = 10
-n = 4
+const n = 4
 nblk = 4
 
 @testset "dicf" begin
-    function dicf_test(n::Int, d_in::CuDeviceArray{Float64},
+    function dicf_test(d_in::CuDeviceArray{Float64},
                         d_out::CuDeviceArray{Float64})
         tx = CUDA.threadIdx().x
         bx = CUDA.blockIdx().x
@@ -84,7 +84,7 @@ nblk = 4
         d_in = CuArray{Float64,2}(undef, (n,n))
         d_out = CuArray{Float64,2}(undef, (n,n))
         copyto!(d_in, tron_A.vals)
-        CUDA.@sync @cuda threads=n blocks=nblk shmem=(n^2*sizeof(Float64)) dicf_test(n,d_in,d_out)
+        CUDA.@sync @cuda threads=n blocks=nblk shmem=(n^2*sizeof(Float64)) dicf_test(d_in,d_out)
         h_L = zeros(n,n)
         copyto!(h_L, d_out)
 
@@ -103,7 +103,7 @@ nblk = 4
 end
 
 @testset "dicfs" begin
-    function dicfs_test(n::Int, alpha::Float64,
+    function dicfs_test(alpha::Float64,
                         dA::CuDeviceArray{Float64},
                         d_out::CuDeviceArray{Float64})
         tx = CUDA.threadIdx().x
@@ -142,7 +142,7 @@ end
         d_out = CuArray{Float64,2}(undef, (n,n))
         alpha = 1.0
         copyto!(dA, tron_A.vals)
-        CUDA.@sync @cuda threads=n blocks=nblk shmem=((2*n+2*n^2)*sizeof(Float64)) dicfs_test(n,alpha,dA,d_out)
+        CUDA.@sync @cuda threads=n blocks=nblk shmem=((2*n+2*n^2)*sizeof(Float64)) dicfs_test(alpha,dA,d_out)
         h_L = zeros(n,n)
         copyto!(h_L, d_out)
         iwa = zeros(Int, 3*n)
@@ -158,7 +158,7 @@ end
             tron_A.vals[j,j] = -tron_A.vals[j,j]
         end
         copyto!(dA, tron_A.vals)
-        CUDA.@sync @cuda threads=n blocks=nblk shmem=((2*n+2*n^2)*sizeof(Float64)) dicfs_test(n,alpha,dA,d_out)
+        CUDA.@sync @cuda threads=n blocks=nblk shmem=((2*n+2*n^2)*sizeof(Float64)) dicfs_test(alpha,dA,d_out)
         copyto!(h_L, d_out)
         ExaTronKernels.dicfs(n, n^2, tron_A, tron_L, 5, alpha, iwa, wa1, wa2)
 
@@ -168,7 +168,7 @@ end
 end
 
 @testset "dcauchy" begin
-    function dcauchy_test(n::Int,dx::CuDeviceArray{Float64},
+    function dcauchy_test(dx::CuDeviceArray{Float64},
                             dl::CuDeviceArray{Float64},
                             du::CuDeviceArray{Float64},
                             dA::CuDeviceArray{Float64},
@@ -232,7 +232,7 @@ end
         copyto!(du, xu)
         copyto!(dg, g)
         copyto!(dA, A.vals)
-        CUDA.@sync @cuda threads=n blocks=nblk shmem=((6*n+n^2)*sizeof(Float64)) dcauchy_test(n,dx,dl,du,dA,dg,delta,alpha,d_out1,d_out2)
+        CUDA.@sync @cuda threads=n blocks=nblk shmem=((6*n+n^2)*sizeof(Float64)) dcauchy_test(dx,dl,du,dA,dg,delta,alpha,d_out1,d_out2)
         h_s = zeros(n)
         h_alpha = zeros(n)
         copyto!(h_s, d_out1)
@@ -246,7 +246,7 @@ end
 end
 
 @testset "dtrpcg" begin
-    function dtrpcg_test(n::Int, delta::Float64, tol::Float64,
+    function dtrpcg_test(delta::Float64, tol::Float64,
                             stol::Float64, d_in::CuDeviceArray{Float64},
                             d_g::CuDeviceArray{Float64},
                             d_out_L::CuDeviceArray{Float64},
@@ -309,7 +309,7 @@ end
         d_out = CuArray{Float64}(undef, n)
         copyto!(d_in, A)
         copyto!(d_g, g)
-        CUDA.@sync @cuda threads=n blocks=nblk shmem=((2*n^2+7*n)*sizeof(Float64)) dtrpcg_test(n,delta,tol,stol,d_in,d_g,d_out_L,d_out)
+        CUDA.@sync @cuda threads=n blocks=nblk shmem=((2*n^2+7*n)*sizeof(Float64)) dtrpcg_test(delta,tol,stol,d_in,d_g,d_out_L,d_out)
         h_w = zeros(n)
         h_L = zeros(n,n)
         copyto!(h_L, d_out_L)
@@ -327,7 +327,7 @@ end
 end
 
 @testset "dprsrch" begin
-    function dprsrch_test(n::Int,d_x::CuDeviceArray{Float64},
+    function dprsrch_test(d_x::CuDeviceArray{Float64},
                             d_xl::CuDeviceArray{Float64},
                             d_xu::CuDeviceArray{Float64},
                             d_g::CuDeviceArray{Float64},
@@ -393,7 +393,7 @@ end
         copyto!(dg, g)
         copyto!(dw, w)
         copyto!(dA, A.vals)
-        CUDA.@sync @cuda threads=n blocks=nblk shmem=((7*n+n^2)*sizeof(Float64)) dprsrch_test(n,dx,dl,du,dg,dw,dA,d_out1,d_out2)
+        CUDA.@sync @cuda threads=n blocks=nblk shmem=((7*n+n^2)*sizeof(Float64)) dprsrch_test(dx,dl,du,dg,dw,dA,d_out1,d_out2)
         h_x = zeros(n)
         h_w = zeros(n)
         copyto!(h_x, d_out1)
@@ -407,7 +407,7 @@ end
 end
 
 @testset "daxpy" begin
-    function daxpy_test(n::Int, da, d_in::CuDeviceArray{Float64},
+    function daxpy_test(da, d_in::CuDeviceArray{Float64},
                         d_out::CuDeviceArray{Float64})
         tx = CUDA.threadIdx().x
         bx = CUDA.blockIdx().x
@@ -434,7 +434,7 @@ end
         d_in = CuArray{Float64}(undef, 2*n)
         d_out = CuArray{Float64}(undef, n)
         copyto!(d_in, h_in)
-        CUDA.@sync @cuda threads=n blocks=nblk shmem=((2*n)*sizeof(Float64)) daxpy_test(n,da,d_in,d_out)
+        CUDA.@sync @cuda threads=n blocks=nblk shmem=((2*n)*sizeof(Float64)) daxpy_test(da,d_in,d_out)
         copyto!(h_out, d_out)
 
         @test norm(h_out .- (h_in[n+1:2*n] .+ da.*h_in[1:n])) <= 1e-12
@@ -442,7 +442,7 @@ end
 end
 
 @testset "dssyax" begin
-    function dssyax_test(n::Int,d_z::CuDeviceArray{Float64},
+    function dssyax_test(d_z::CuDeviceArray{Float64},
                             d_in::CuDeviceArray{Float64},
                             d_out::CuDeviceArray{Float64})
         tx = CUDA.threadIdx().x
@@ -475,7 +475,7 @@ end
         d_out = CuArray{Float64}(undef, n)
         copyto!(d_z, z)
         copyto!(d_in, h_in)
-        CUDA.@sync @cuda threads=n blocks=nblk shmem=((2*n+n^2)*sizeof(Float64)) dssyax_test(n,d_z,d_in,d_out)
+        CUDA.@sync @cuda threads=n blocks=nblk shmem=((2*n+n^2)*sizeof(Float64)) dssyax_test(d_z,d_in,d_out)
         copyto!(h_out, d_out)
 
         @test norm(h_out .- h_in*z) <= 1e-12
@@ -483,7 +483,7 @@ end
 end
 
 @testset "dmid" begin
-    function dmid_test(n::Int, dx::CuDeviceArray{Float64},
+    function dmid_test(dx::CuDeviceArray{Float64},
                         dl::CuDeviceArray{Float64},
                         du::CuDeviceArray{Float64},
                         d_out::CuDeviceArray{Float64})
@@ -530,7 +530,7 @@ end
         copyto!(dx, x)
         copyto!(dl, xl)
         copyto!(du, xu)
-        CUDA.@sync @cuda threads=n blocks=nblk shmem=((3*n)*sizeof(Float64)) dmid_test(n,dx,dl,du,d_out)
+        CUDA.@sync @cuda threads=n blocks=nblk shmem=((3*n)*sizeof(Float64)) dmid_test(dx,dl,du,d_out)
         copyto!(x_out, d_out)
 
         ExaTronKernels.dmid(n, x, xl, xu)
@@ -539,7 +539,7 @@ end
 end
 
 @testset "dgpstep" begin
-    function dgpstep_test(n,dx::CuDeviceArray{Float64},
+    function dgpstep_test(dx::CuDeviceArray{Float64},
                             dl::CuDeviceArray{Float64},
                             du::CuDeviceArray{Float64},
                             alpha::Float64,
@@ -601,7 +601,7 @@ end
         copyto!(dl, xl)
         copyto!(du, xu)
         copyto!(dw, w)
-        CUDA.@sync @cuda threads=n blocks=nblk shmem=((5*n)*sizeof(Float64)) dgpstep_test(n,dx,dl,du,alpha,dw,d_out)
+        CUDA.@sync @cuda threads=n blocks=nblk shmem=((5*n)*sizeof(Float64)) dgpstep_test(dx,dl,du,alpha,dw,d_out)
         copyto!(s_out, d_out)
 
         ExaTronKernels.dgpstep(n, x, xl, xu, alpha, w, s)
@@ -610,7 +610,7 @@ end
 end
 
 @testset "dbreakpt" begin
-    function dbreakpt_test(n,dx::CuDeviceArray{Float64},
+    function dbreakpt_test(dx::CuDeviceArray{Float64},
                             dl::CuDeviceArray{Float64},
                             du::CuDeviceArray{Float64},
                             dw::CuDeviceArray{Float64},
@@ -661,7 +661,7 @@ end
         copyto!(dl, xl)
         copyto!(du, xu)
         copyto!(dw, w)
-        CUDA.@sync @cuda threads=n blocks=nblk shmem=((4*n)*sizeof(Float64)) dbreakpt_test(n,dx,dl,du,dw,d_nbrpt,d_brptmin,d_brptmax)
+        CUDA.@sync @cuda threads=n blocks=nblk shmem=((4*n)*sizeof(Float64)) dbreakpt_test(dx,dl,du,dw,d_nbrpt,d_brptmin,d_brptmax)
         copyto!(h_nbrpt, d_nbrpt)
         copyto!(h_brptmin, d_brptmin)
         copyto!(h_brptmax, d_brptmax)
@@ -674,7 +674,7 @@ end
 end
 
 @testset "dnrm2" begin
-    function dnrm2_test(n::Int, d_in::CuDeviceArray{Float64},
+    function dnrm2_test(d_in::CuDeviceArray{Float64},
                         d_out::CuDeviceArray{Float64})
         tx = CUDA.threadIdx().x
         bx = CUDA.blockIdx().x
@@ -698,7 +698,7 @@ end
         d_in = CuArray{Float64}(undef, n)
         d_out = CuArray{Float64}(undef, n)
         copyto!(d_in, h_in)
-        CUDA.@sync @cuda threads=n blocks=nblk shmem=(n*sizeof(Float64)) dnrm2_test(n,d_in,d_out)
+        CUDA.@sync @cuda threads=n blocks=nblk shmem=(n*sizeof(Float64)) dnrm2_test(d_in,d_out)
         copyto!(h_out, d_out)
         xnorm = norm(h_in, 2)
 
@@ -707,7 +707,7 @@ end
 end
 
 @testset "nrm2" begin
-    function nrm2_test(n::Int, d_A::CuDeviceArray{Float64}, d_out::CuDeviceArray{Float64})
+    function nrm2_test(d_A::CuDeviceArray{Float64}, d_out::CuDeviceArray{Float64})
         tx = CUDA.threadIdx().x
         bx = CUDA.blockIdx().x
 
@@ -741,7 +741,7 @@ end
         d_out = CuArray{Float64}(undef, n)
         h_wa = zeros(n)
         copyto!(d_A, A)
-        CUDA.@sync @cuda threads=(n,n) blocks=nblk shmem=((n^2+n)*sizeof(Float64)) nrm2_test(n,d_A,d_out)
+        CUDA.@sync @cuda threads=(n,n) blocks=nblk shmem=((n^2+n)*sizeof(Float64)) nrm2_test(d_A,d_out)
         copyto!(h_wa, d_out)
 
         @test norm(wa .- h_wa) <= 1e-10
@@ -749,7 +749,7 @@ end
 end
 
 @testset "dcopy" begin
-    function dcopy_test(n::Int, d_in::CuDeviceArray{Float64},
+    function dcopy_test(d_in::CuDeviceArray{Float64},
                         d_out::CuDeviceArray{Float64})
         tx = CUDA.threadIdx().x
         bx = CUDA.blockIdx().x
@@ -776,7 +776,7 @@ end
         d_in = CuArray{Float64}(undef, n)
         d_out = CuArray{Float64}(undef, n)
         copyto!(d_in, h_in)
-        CUDA.@sync @cuda threads=n blocks=nblk shmem=((2*n)*sizeof(Float64)) dcopy_test(n,d_in,d_out)
+        CUDA.@sync @cuda threads=n blocks=nblk shmem=((2*n)*sizeof(Float64)) dcopy_test(d_in,d_out)
         copyto!(h_out, d_out)
 
         @test !(false in (h_in .== h_out))
@@ -784,7 +784,7 @@ end
 end
 
 @testset "ddot" begin
-    function ddot_test(n::Int, d_in::CuDeviceArray{Float64},
+    function ddot_test(d_in::CuDeviceArray{Float64},
                         d_out::CuDeviceArray{Float64})
         tx = CUDA.threadIdx().x
         bx = CUDA.blockIdx().x
@@ -812,7 +812,7 @@ end
         d_in = CuArray{Float64}(undef, n)
         d_out = CuArray{Float64,2}(undef, (n,n))
         copyto!(d_in, h_in)
-        CUDA.@sync @cuda threads=n blocks=nblk shmem=((2*n)*sizeof(Float64)) ddot_test(n,d_in,d_out)
+        CUDA.@sync @cuda threads=n blocks=nblk shmem=((2*n)*sizeof(Float64)) ddot_test(d_in,d_out)
         copyto!(h_out, d_out)
 
         @test norm(dot(h_in,h_in) .- h_out, 2) <= 1e-10
@@ -820,7 +820,7 @@ end
 end
 
 @testset "dscal" begin
-    function dscal_test(n::Int, da::Float64,
+    function dscal_test(da::Float64,
                         d_in::CuDeviceArray{Float64},
                         d_out::CuDeviceArray{Float64})
         tx = CUDA.threadIdx().x
@@ -846,7 +846,7 @@ end
         d_in = CuArray{Float64}(undef, n)
         d_out = CuArray{Float64}(undef, n)
         copyto!(d_in, h_in)
-        CUDA.@sync @cuda threads=n blocks=nblk shmem=(n*sizeof(Float64)) dscal_test(n,da,d_in,d_out)
+        CUDA.@sync @cuda threads=n blocks=nblk shmem=(n*sizeof(Float64)) dscal_test(da,d_in,d_out)
         copyto!(h_out, d_out)
 
         @test norm(h_out .- (da.*h_in)) <= 1e-12
@@ -854,7 +854,7 @@ end
 end
 
 @testset "dtrqsol" begin
-    function dtrqsol_test(n::Int, d_x::CuDeviceArray{Float64},
+    function dtrqsol_test(d_x::CuDeviceArray{Float64},
                             d_p::CuDeviceArray{Float64},
                             d_out::CuDeviceArray{Float64},
                             delta::Float64)
@@ -885,14 +885,14 @@ end
         d_out = CuArray{Float64,2}(undef, (n,n))
         copyto!(d_x, x)
         copyto!(d_p, p)
-        CUDA.@sync @cuda threads=n blocks=nblk shmem=((2*n)*sizeof(Float64)) dtrqsol_test(n,d_x,d_p,d_out,delta)
+        CUDA.@sync @cuda threads=n blocks=nblk shmem=((2*n)*sizeof(Float64)) dtrqsol_test(d_x,d_p,d_out,delta)
 
         @test norm(sigma .- d_out) <= 1e-10
     end
 end
 
 @testset "dspcg" begin
-    function dspcg_test(n::Int, delta::Float64, rtol::Float64,
+    function dspcg_test(delta::Float64, rtol::Float64,
                         cg_itermax::Int, dx::CuDeviceArray{Float64},
                         dxl::CuDeviceArray{Float64},
                         dxu::CuDeviceArray{Float64},
@@ -981,7 +981,7 @@ end
         copyto!(dg, g)
         copyto!(ds, s)
 
-        CUDA.@sync @cuda threads=n blocks=nblk shmem=((3*n)*sizeof(Int)+(12*n+3*(n^2))*sizeof(Float64)) dspcg_test(n,delta,rtol,cg_itermax,dx,dxl,dxu,dA,dg,ds,d_out)
+        CUDA.@sync @cuda threads=n blocks=nblk shmem=((3*n)*sizeof(Int)+(12*n+3*(n^2))*sizeof(Float64)) dspcg_test(delta,rtol,cg_itermax,dx,dxl,dxu,dA,dg,ds,d_out)
         h_x = zeros(n)
         copyto!(h_x, d_out)
 
@@ -993,7 +993,7 @@ end
 end
 
 @testset "dgpnorm" begin
-    function dgpnorm_test(n, dx, dxl, dxu, dg, d_out)
+    function dgpnorm_test( dx, dxl, dxu, dg, d_out)
         tx = CUDA.threadIdx().x
         bx = CUDA.blockIdx().x
 
@@ -1034,7 +1034,7 @@ end
         copyto!(dxu, xu)
         copyto!(dg, g)
 
-        gptime = @timed CUDA.@sync @cuda threads=n blocks=nblk shmem=(4*n*sizeof(Float64)) dgpnorm_test(n, dx, dxl, dxu, dg, d_out)
+        gptime = @timed CUDA.@sync @cuda threads=n blocks=nblk shmem=(4*n*sizeof(Float64)) dgpnorm_test( dx, dxl, dxu, dg, d_out)
         h_v = zeros(n)
         copyto!(h_v, d_out)
 
@@ -1044,7 +1044,7 @@ end
 end
 
 @testset "dtron" begin
-    function dtron_test(n::Int, f::Float64, frtol::Float64, fatol::Float64, fmin::Float64,
+    function dtron_test(f::Float64, frtol::Float64, fatol::Float64, fmin::Float64,
                         cgtol::Float64, cg_itermax::Int, delta::Float64, task::Int,
                         disave::CuDeviceArray{Int}, ddsave::CuDeviceArray{Float64},
                         dx::CuDeviceArray{Float64}, dxl::CuDeviceArray{Float64},
@@ -1140,7 +1140,7 @@ end
         copyto!(dA, tron_A.vals)
         copyto!(dg, g)
 
-        @cuda threads=n blocks=nblk shmem=((3*n)*sizeof(Int)+(13*n+3*(n^2))*sizeof(Float64)) dtron_test(n,f,frtol,fatol,fmin,cgtol,cg_itermax,delta,task,disave,ddsave,dx,dxl,dxu,dA,dg,d_out)
+        @cuda threads=n blocks=nblk shmem=((3*n)*sizeof(Int)+(13*n+3*(n^2))*sizeof(Float64)) dtron_test(f,frtol,fatol,fmin,cgtol,cg_itermax,delta,task,disave,ddsave,dx,dxl,dxu,dA,dg,d_out)
         h_x = zeros(n)
         copyto!(h_x, d_out)
 
@@ -1299,7 +1299,7 @@ end
         return status, minor_iter
     end
 
-    function driver_kernel_test(n, max_feval, max_minor,
+    function driver_kernel_test( max_feval, max_minor,
                                 dx, dxl, dxu, dA, dc, d_out)
         tx = CUDA.threadIdx().x
         bx = CUDA.blockIdx().x
@@ -1387,7 +1387,7 @@ end
         copyto!(tron.x, x)
         status = ExaTronKernels.solveProblem(tron)
 
-        CUDA.@sync @cuda threads=n blocks=nblk shmem=((4*n)*sizeof(Int)+(14*n+3*(n^2))*sizeof(Float64)) driver_kernel_test(n,max_feval,max_minor,dx,dxl,dxu,dA,dc,d_out)
+        CUDA.@sync @cuda threads=n blocks=nblk shmem=((4*n)*sizeof(Int)+(14*n+3*(n^2))*sizeof(Float64)) driver_kernel_test(max_feval,max_minor,dx,dxl,dxu,dA,dc,d_out)
         h_x = zeros(n)
         copyto!(h_x, d_out)
 
