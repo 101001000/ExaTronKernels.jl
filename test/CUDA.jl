@@ -10,40 +10,40 @@ catch e
     throw(e)
 end
 
-"""
-Test ExaTron's internal routines written for GPU.
 
-The current implementation assumes the following:
-  - A thread block takes a matrix structure, (tx,ty), with
-    n <= blockDim().x = blockDim().y <= 32 and blockDim().x is even.
-  - Arguments passed on to these routines are assumed to be
-    of size at least n. This is to prevent multiple thread
-    divergence when we call a function with n_hat < n.
-    Such a case occurs when we fix active variables.
+# Test ExaTron's internal routines written for GPU.
+# 
+# The current implementation assumes the following:
+#   - A thread block takes a matrix structure, (tx,ty), with
+#     n <= blockDim().x = blockDim().y <= 32 and blockDim().x is even.
+#   - Arguments passed on to these routines are assumed to be
+#     of size at least n. This is to prevent multiple thread
+#     divergence when we call a function with n_hat < n.
+#     Such a case occurs when we fix active variables.
+# 
+# We test the following routines, where [O] indicates if the routine
+# is checked if n < blockDim().x is OK.
+#   - dicf     [O][O]: this routine also tests dnsol and dtsol.
+#   - dicfs    [O][T]
+#   - dcauchy  [O][T]
+#   - dtrpcg   [O][T]
+#   - dprsrch  [O][T]
+#   - daxpy    [O][O]
+#   - dssyax   [O][O]: we do shuffle using blockDim().x.
+#   - dmid     [O][O]: we could use a single thread only to multiple divergences.
+#   - dgpstep  [O][O]
+#   - dbreakpt [O][O]: we use the existing ExaTron implementation as is.
+#   - dnrm2    [O][O]: we do shuffle using blockDim().x.
+#   - nrm2     [O][O]: we do shuffle using blockDim().x.
+#   - dcopy    [O][O]
+#   - ddot     [O][O]
+#   - dscal    [O][O]
+#   - dtrqsol  [O][O]
+#   - dspcg    [O][T]: we use a single thread to avoid multiple divergences.
+#   - dgpnorm  [O][O]
+#   - dtron    [O]
+#   - driver_kernel
 
-We test the following routines, where [O] indicates if the routine
-is checked if n < blockDim().x is OK.
-  - dicf     [O][O]: this routine also tests dnsol and dtsol.
-  - dicfs    [O][T]
-  - dcauchy  [O][T]
-  - dtrpcg   [O][T]
-  - dprsrch  [O][T]
-  - daxpy    [O][O]
-  - dssyax   [O][O]: we do shuffle using blockDim().x.
-  - dmid     [O][O]: we could use a single thread only to multiple divergences.
-  - dgpstep  [O][O]
-  - dbreakpt [O][O]: we use the existing ExaTron implementation as is.
-  - dnrm2    [O][O]: we do shuffle using blockDim().x.
-  - nrm2     [O][O]: we do shuffle using blockDim().x.
-  - dcopy    [O][O]
-  - ddot     [O][O]
-  - dscal    [O][O]
-  - dtrqsol  [O][O]
-  - dspcg    [O][T]: we use a single thread to avoid multiple divergences.
-  - dgpnorm  [O][O]
-  - dtron    [O]
-  - driver_kernel
-"""
 
 Random.seed!(0)
 itermax = 10
