@@ -859,7 +859,6 @@ end
                             d_out::CuDeviceArray{Float64},
                             delta::Float64)
         tx = CUDA.threadIdx().x
-        ty = CUDA.threadIdx().y
 
         x = CuDynamicSharedArray(Float64, n)
         p = CuDynamicSharedArray(Float64, n, n*sizeof(Float64))
