@@ -5,6 +5,8 @@ using Random
 using Test
 using BenchmarkTools
 
+include("../src/utils.jl")
+
 try
     tmp = CuArray{Float64}(undef, 10)
 catch e
@@ -87,6 +89,7 @@ nblk = 4
         copyto!(d_in, tron_A.vals)
         b = @benchmark (CUDA.@sync @cuda threads=$n blocks=$nblk shmem=($n^2*sizeof(Float64)) $dicf_test($d_in,$d_out))
         display(b)
+        save_benchmark(b, "dicf.json")
         h_L = zeros(n,n)
         copyto!(h_L, d_out)
 
@@ -146,6 +149,7 @@ end
         copyto!(dA, tron_A.vals)
         b = @benchmark (CUDA.@sync @cuda threads=$n blocks=$nblk shmem=((2*$n+2*$n^2)*sizeof(Float64)) $dicfs_test($alpha,$dA,$d_out))
         display(b)
+        save_benchmark(b, "dicfs.json")
         h_L = zeros(n,n)
         copyto!(h_L, d_out)
         iwa = zeros(Int, 3*n)
@@ -237,6 +241,7 @@ end
         copyto!(dA, A.vals)
         b = @benchmark (CUDA.@sync @cuda threads=$n blocks=$nblk shmem=((6*$n+$n^2)*sizeof(Float64)) $dcauchy_test($dx,$dl,$du,$dA,$dg,$delta,$alpha,$d_out1,$d_out2))
         display(b)
+        save_benchmark(b, "dcauchy.json")
         h_s = zeros(n)
         h_alpha = zeros(n)
         copyto!(h_s, d_out1)
@@ -315,6 +320,7 @@ end
         copyto!(d_g, g)
         b = @benchmark(CUDA.@sync @cuda threads=$n blocks=$nblk shmem=((2*$n^2+7*$n)*sizeof(Float64)) $dtrpcg_test($delta,$tol,$stol,$d_in,$d_g,$d_out_L,$d_out))
         display(b)
+        save_benchmark(b, "dtrpcg.json")
         h_w = zeros(n)
         h_L = zeros(n,n)
         copyto!(h_L, d_out_L)
@@ -400,7 +406,7 @@ end
         copyto!(dA, A.vals)
         b = @benchmark(CUDA.@sync @cuda threads=$n blocks=$nblk shmem=((7*$n+$n^2)*sizeof(Float64)) $dprsrch_test($dx,$dl,$du,$dg,$dw,$dA,$d_out1,$d_out2))
         display(b)
-        
+        save_benchmark(b, "dprsrch.json")
         h_x = zeros(n)
         h_w = zeros(n)
         copyto!(h_x, d_out1)
@@ -443,6 +449,7 @@ end
         copyto!(d_in, h_in)
         b = @benchmark (CUDA.@sync @cuda threads=$n blocks=$nblk shmem=((2*$n)*sizeof(Float64)) $daxpy_test($da, $d_in, $d_out))
         display(b)
+        save_benchmark(b, "daxpy.json")
         copyto!(h_out, d_out)
 
         @test norm(h_out .- (h_in[n+1:2*n] .+ da.*h_in[1:n])) <= 1e-12
@@ -484,6 +491,7 @@ end
         copyto!(d_in, h_in)
         b = @benchmark(CUDA.@sync @cuda threads=$n blocks=$nblk shmem=((2*$n+$n^2)*sizeof(Float64)) $dssyax_test($d_z,$d_in,$d_out))
         display(b)
+        save_benchmark(b, "dssyax.json")
         copyto!(h_out, d_out)
 
         @test norm(h_out .- h_in*z) <= 1e-12
@@ -540,6 +548,7 @@ end
  
         b = @benchmark(CUDA.@sync @cuda threads=$n blocks=$nblk shmem=((3*$n)*sizeof(Float64)) $dmid_test($dx,$dl,$du,$d_out))
         display(b)
+        save_benchmark(b, "dmid.json")
         copyto!(x_out, d_out)
 
         ExaTronKernels.dmid(n, x, xl, xu)
@@ -613,6 +622,7 @@ end
         copyto!(dw, w)
         b = @benchmark(CUDA.@sync @cuda threads=$n blocks=$nblk shmem=((5*$n)*sizeof(Float64)) $dgpstep_test($dx,$dl,$du,$alpha,$dw,$d_out))
         display(b)
+        save_benchmark(b, "dgpstep.json")
         copyto!(s_out, d_out)
 
         ExaTronKernels.dgpstep(n, x, xl, xu, alpha, w, s)
@@ -674,6 +684,7 @@ end
         copyto!(dw, w)
         b = @benchmark(CUDA.@sync @cuda threads=$n blocks=$nblk shmem=((4*$n)*sizeof(Float64)) $dbreakpt_test($dx,$dl,$du,$dw,$d_nbrpt,$d_brptmin,$d_brptmax))
         display(b)
+        save_benchmark(b, "dbreakpt.json")
         copyto!(h_nbrpt, d_nbrpt)
         copyto!(h_brptmin, d_brptmin)
         copyto!(h_brptmax, d_brptmax)
@@ -711,7 +722,8 @@ end
         d_out = CuArray{Float64}(undef, n)
         copyto!(d_in, h_in)
         b = @benchmark(CUDA.@sync @cuda threads=$n blocks=$nblk shmem=($n*sizeof(Float64)) $dnrm2_test($d_in,$d_out))
-        display(b)        
+        display(b)
+        save_benchmark(b, "dnrm2.json")        
         copyto!(h_out, d_out)
         xnorm = norm(h_in, 2)
 
@@ -756,6 +768,7 @@ end
         copyto!(d_A, A)
         b = @benchmark(CUDA.@sync @cuda threads=($n,$n) blocks=$nblk shmem=(($n^2+$n)*sizeof(Float64)) $nrm2_test($d_A,$d_out))
         display(b)
+        save_benchmark(b, "nrm2.json")
         copyto!(h_wa, d_out)
 
         @test norm(wa .- h_wa) <= 1e-10
@@ -793,6 +806,7 @@ end
         copyto!(d_in, h_in)
         b = @benchmark(CUDA.@sync @cuda threads=$n blocks=$nblk shmem=((2*$n)*sizeof(Float64)) $dcopy_test($d_in,$d_out))
         display(b)
+        save_benchmark(b, "dcopy.json")
         copyto!(h_out, d_out)
 
         @test !(false in (h_in .== h_out))
@@ -830,6 +844,7 @@ end
         copyto!(d_in, h_in)
         b = @benchmark(CUDA.@sync @cuda threads=$n blocks=$nblk shmem=((2*$n)*sizeof(Float64)) $ddot_test($d_in,$d_out))
         display(b)
+        save_benchmark(b, "ddot.json")
         copyto!(h_out, d_out)
 
         @test norm(dot(h_in,h_in) .- h_out, 2) <= 1e-10
@@ -867,6 +882,7 @@ end
         copyto!(d_in, h_in)
         b = @benchmark(CUDA.@sync @cuda threads=$n blocks=$nblk shmem=($n*sizeof(Float64)) $dscal_test($da,$d_in,$d_out))
         display(b)
+        save_benchmark(b, "dscal.json")
         copyto!(h_out, d_out)
 
         @test norm(h_out .- (da.*h_in)) <= 1e-12
@@ -907,6 +923,7 @@ end
         copyto!(d_p, p)
         b = @benchmark (CUDA.@sync @cuda threads=$n blocks=$nblk shmem=((2*$n)*sizeof(Float64)) $dtrqsol_test($d_x,$d_p,$d_out,$delta))
         display(b)
+        save_benchmark(b, "dtrqsol.json")
         @test norm(sigma .- d_out) <= 1e-10
     end
 end
@@ -1003,6 +1020,7 @@ end
 
         b = @benchmark(CUDA.@sync @cuda threads=$n blocks=$nblk shmem=((3*$n)*sizeof(Int)+(12*$n+3*($n^2))*sizeof(Float64)) $dspcg_test($delta,$rtol,$cg_itermax,$dx,$dxl,$dxu,$dA,$dg,$ds,$d_out))
         display(b)
+        save_benchmark(b, "dspcg.json")
         h_x = zeros(n)
         copyto!(h_x, d_out)
 
@@ -1057,6 +1075,7 @@ end
 
         b = @benchmark(CUDA.@sync @cuda threads=$n blocks=$nblk shmem=(4*$n*sizeof(Float64)) $dgpnorm_test( $dx, $dxl, $dxu, $dg, $d_out))
         display(b)
+        save_benchmark(b, "dgpnorm.json")
         h_v = zeros(n)
         copyto!(h_v, d_out)
 
@@ -1164,6 +1183,7 @@ end
 
         b = @benchmark (@cuda threads=$n blocks=$nblk shmem=((3*n)*sizeof(Int)+(13*$n+3*($n^2))*sizeof(Float64)) $dtron_test($f,$frtol,$fatol,$fmin,$cgtol,$cg_itermax,$delta,$task,$disave,$ddsave,$dx,$dxl,$dxu,$dA,$dg,$d_out))
         display(b)
+        save_benchmark(b, "dtron.json")
         h_x = zeros(n)
         copyto!(h_x, d_out)
 
@@ -1412,6 +1432,7 @@ end
 
         b = @benchmark(CUDA.@sync @cuda threads=$n blocks=$nblk shmem=((4*$n)*sizeof(Int)+(14*$n+3*($n^2))*sizeof(Float64)) $driver_kernel_test($max_feval,$max_minor,$dx,$dxl,$dxu,$dA,$dc,$d_out))
         display(b)
+        save_benchmark(b, "driver_kernel.json")
         h_x = zeros(n)
         copyto!(h_x, d_out)
 
